@@ -1,0 +1,3 @@
+-java-home /opt/homebrew/Cellar/openjdk@11/11.0.28/libexec/openjdk.jdk/Contents/Home
+-Dsbt.override.build.repos=false
+-Dsbt.coursier=true
