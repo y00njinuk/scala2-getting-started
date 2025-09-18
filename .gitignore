@@ -43,3 +43,7 @@ build/
 ### Scala ###
 .bsp/
 .metals/
+.bloop/root-test.json
+.bloop/root.json
+project/.bloop
+project/project
