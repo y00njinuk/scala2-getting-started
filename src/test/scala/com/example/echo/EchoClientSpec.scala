@@ -35,16 +35,23 @@ class EchoClientSpec
 
   private val mutableService = new MutableEchoService(EchoHandlers.success)
   private var server: ListeningServer = _
-  private var client: Echo.MethodPerEndpoint = _
-  private var clientCloser: Closable = Closable.nop
+  private lazy val clientResource: (Echo.MethodPerEndpoint, Closable) = {
+    val address = server.boundAddress.asInstanceOf[InetSocketAddress]
+    val servicePerEndpoint = ThriftMux.client
+      .servicePerEndpoint[Echo.ServicePerEndpoint](
+        s"localhost:${address.getPort}",
+        label = "echo-client"
+      )
+    val methodPerEndpoint = Echo.MethodPerEndpoint(servicePerEndpoint)
+    methodPerEndpoint -> servicePerEndpoint.asClosable
+  }
+  private lazy val client: Echo.MethodPerEndpoint = clientResource._1
+  private lazy val clientCloser: Closable = clientResource._2
 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     server = ThriftMux.server.serveIface("localhost:0", mutableService)
-    val address = server.boundAddress.asInstanceOf[InetSocketAddress]
-    val servicePerEndpoint = ThriftMux.client.servicePerEndpoint[Echo.ServicePerEndpoint](s"localhost:${address.getPort}", label = "echo-client")
-    client = Echo.MethodPerEndpoint(servicePerEndpoint)
-    clientCloser = servicePerEndpoint.asClosable
+    client
   }
 
   override protected def afterAll(): Unit = {
